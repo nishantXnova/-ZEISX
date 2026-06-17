@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZEISX — Rust Calc Compiler</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Courier New', 'Fira Code', monospace;
+  background: #0a0e14;
+  color: #b3b1ad;
+  min-height: 100vh;
+  padding: 24px;
+}
+.brand { text-align: center; margin-bottom: 24px; }
+.brand h1 { color: #39bae6; font-size: 28px; letter-spacing: 4px; }
+.brand p { color: #626a73; font-size: 13px; }
+.app { max-width: 680px; margin: 0 auto; display: grid; gap: 12px; }
+.card {
+  background: #0d1117;
+  border: 1px solid #1f2733;
+  border-radius: 6px;
+  padding: 12px 16px;
+}
+.label { font-size: 11px; color: #626a73; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+.row { display: flex; gap: 8px; }
+input[type="text"] {
+  flex: 1;
+  background: #0a0e14;
+  border: 1px solid #2d3748;
+  border-radius: 4px;
+  color: #e6e1cf;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 16px;
+  outline: none;
+}
+input[type="text"]:focus { border-color: #39bae6; }
+button {
+  background: #39bae6;
+  color: #0a0e14;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-family: inherit;
+  font-weight: bold;
+  cursor: pointer;
+}
+button:hover { background: #95e6cb; }
+.output { font-size: 20px; color: #95e6cb; min-height: 28px; word-break: break-all; }
+.output.err { color: #d95757; }
+.examples { font-size: 12px; color: #626a73; padding-top: 4px; }
+.wasm-status { font-size: 12px; padding: 6px 10px; border-radius: 3px; display: inline-block; }
+.wasm-status.ok { background: #1a2e1a; color: #95e6cb; }
+.wasm-status.fail { background: #2e1a1a; color: #d95757; }
+</style>
+</head>
+<body>
+<div class="brand">
+  <h1>█▀▀ █▀▀ █▀▀ ▀▀█▀▀</h1>
+  <p>ZEISX · Rust-native calc compiler · WASM edition</p>
+</div>
+<div class="app">
+  <div class="card">
+    <div class="label">Expression</div>
+    <div class="row">
+      <input id="expr" type="text" placeholder="12 + 30" autocomplete="off" spellcheck="false">
+      <button id="run">Run</button>
+    </div>
+    <div class="examples">try: 12+30 · 100/4 · -7*8 · (2+3)*4 · 99-55</div>
+  </div>
+  <div class="card">
+    <div class="label">Result</div>
+    <div id="result" class="output">waiting for input…</div>
+  </div>
+  <div class="card">
+    <div class="label">WASM Module</div>
+    <span id="status" class="wasm-status">loading…</span>
+  </div>
+</div>
+
+<script type="module">
+import init, { calculate } from './pkg/calc_wasm.js';
+
+const expr = document.getElementById('expr');
+const runBtn = document.getElementById('run');
+const result = document.getElementById('result');
+const status = document.getElementById('status');
+
+function execute() {
+  const val = expr.value.trim();
+  if (!val) return;
+  result.classList.remove('err');
+  try {
+    const out = calculate(val);
+    result.textContent = out;
+  } catch (e) {
+    result.textContent = 'runtime error: ' + e;
+    result.classList.add('err');
+  }
+}
+
+runBtn.addEventListener('click', execute);
+expr.addEventListener('keydown', (e) => { if (e.key === 'Enter') execute(); });
+
+init()
+  .then(() => { status.textContent = 'WASM loaded ✓'; status.classList.add('ok'); })
+  .catch((e) => { status.textContent = 'WASM load failed: ' + e; status.classList.add('fail'); });
+</script>
+</body>
+</html>
